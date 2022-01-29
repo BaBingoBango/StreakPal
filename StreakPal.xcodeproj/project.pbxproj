@@ -148,6 +148,7 @@
 		AAD42AB0242FD6B9001BCCE8 = {
 			isa = PBXGroup;
 			children = (
+				AA8D17FA27A5DE2E00889EF0 /* README.md */,
 				AAD42ABB242FD6B9001BCCE8 /* StreakPal */,
 				AAD42AD2242FD6BA001BCCE8 /* StreakPalTests */,
 				AAD42ADD242FD6BA001BCCE8 /* StreakPalUITests */,
@@ -168,7 +169,6 @@
 		AAD42ABB242FD6B9001BCCE8 /* StreakPal */ = {
 			isa = PBXGroup;
 			children = (
-				AA8D17FA27A5DE2E00889EF0 /* README.md */,
 				AA5FA9632703999100BD356D /* StreakPalDebug.entitlements */,
 				AA5FA962270398E700BD356D /* StreakPalRelease.entitlements */,
 				AA5FA961270398D900BD356D /* StreakPal.entitlements */,
