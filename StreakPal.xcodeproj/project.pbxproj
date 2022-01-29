@@ -11,6 +11,7 @@
 		AA3774F4249949EF00E5E60D /* ColorEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA3774F3249949EE00E5E60D /* ColorEngine.swift */; };
 		AA4486332430393200752667 /* SetupSequence2.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4486322430393200752667 /* SetupSequence2.swift */; };
 		AA7C38D424FC4B650097CF85 /* TipsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7C38D324FC4B650097CF85 /* TipsView.swift */; };
+		AA8D17FB27A5DE2E00889EF0 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AA8D17FA27A5DE2E00889EF0 /* README.md */; };
 		AAA2870C2701603C00CFE9EA /* StrongMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA2870B2701603C00CFE9EA /* StrongMessages.swift */; };
 		AAA2870E27016A8000CFE9EA /* EntryPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA2870D27016A8000CFE9EA /* EntryPoint.swift */; };
 		AAAAD933249FCD5C0096AE23 /* Notif.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAAD932249FCD5C0096AE23 /* Notif.swift */; };
@@ -54,6 +55,7 @@
 		AA5FA962270398E700BD356D /* StreakPalRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StreakPalRelease.entitlements; sourceTree = "<group>"; };
 		AA5FA9632703999100BD356D /* StreakPalDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StreakPalDebug.entitlements; sourceTree = "<group>"; };
 		AA7C38D324FC4B650097CF85 /* TipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsView.swift; sourceTree = "<group>"; };
+		AA8D17FA27A5DE2E00889EF0 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AAA2870B2701603C00CFE9EA /* StrongMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrongMessages.swift; sourceTree = "<group>"; };
 		AAA2870D27016A8000CFE9EA /* EntryPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryPoint.swift; sourceTree = "<group>"; };
 		AAAAD932249FCD5C0096AE23 /* Notif.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notif.swift; sourceTree = "<group>"; };
@@ -166,6 +168,7 @@
 		AAD42ABB242FD6B9001BCCE8 /* StreakPal */ = {
 			isa = PBXGroup;
 			children = (
+				AA8D17FA27A5DE2E00889EF0 /* README.md */,
 				AA5FA9632703999100BD356D /* StreakPalDebug.entitlements */,
 				AA5FA962270398E700BD356D /* StreakPalRelease.entitlements */,
 				AA5FA961270398D900BD356D /* StreakPal.entitlements */,
@@ -326,6 +329,7 @@
 			files = (
 				AA25DAEA270155050001495F /* Assets.xcassets in Resources */,
 				AAD42AC9242FD6BA001BCCE8 /* LaunchScreen.storyboard in Resources */,
+				AA8D17FB27A5DE2E00889EF0 /* README.md in Resources */,
 				AAD42AC6242FD6BA001BCCE8 /* Preview Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
