@@ -5,216 +5,189 @@
 //  Created by Ethan Marshall on 3/28/20.
 //
 
-//import Foundation
-import SwiftUI
-import Combine
+import Foundation
+import Observation
+import OSLog
+import UserNotifications
 
-/// The class responsible for holding the user's data. One instance handles all user data for the app.
-final class UserData: ObservableObject, Codable {
-    
-    // Enumerations
-    enum CodingKeys: String, CodingKey {
-        case firstReminderDate
-        case secondReminderDate
-        case didSetup
-        case sendToSnap
-        case hasTwoReminders
-        case wantsNotifications
-        case isTimeSensitive
+/// The app's single source of truth for reminder settings.
+///
+/// The model persists itself as JSON in the Documents directory using the same file name and keys
+/// the app has always used, so existing installs pick up their settings unchanged. Every change is
+/// written immediately, and changes that affect the schedule re-register the local notifications.
+@Observable
+final class UserData {
+
+    // MARK: Settings
+
+    /// When the first daily reminder fires. Only the hour and minute are used.
+    var firstReminderDate: Date { didSet { settingsDidChange(affectsSchedule: true) } }
+
+    /// When the optional second daily reminder fires.
+    var secondReminderDate: Date { didSet { settingsDidChange(affectsSchedule: true) } }
+
+    /// Whether the user has completed setup. Reminders are only scheduled once this is true.
+    var didSetup: Bool { didSet { settingsDidChange(affectsSchedule: true) } }
+
+    /// Whether tapping a reminder opens Snapchat.
+    var sendToSnap: Bool { didSet { settingsDidChange(affectsSchedule: false) } }
+
+    /// Whether to send two reminders a day instead of one.
+    var hasTwoReminders: Bool { didSet { settingsDidChange(affectsSchedule: true) } }
+
+    /// Whether the user granted notification permission during setup.
+    var wantsNotifications: Bool { didSet { settingsDidChange(affectsSchedule: false) } }
+
+    /// Whether reminders use the Time Sensitive interruption level.
+    var isTimeSensitive: Bool { didSet { settingsDidChange(affectsSchedule: true) } }
+
+    // MARK: Lifecycle
+
+    private let fileURL: URL
+
+    /// Loads the settings stored at `fileURL`, falling back to the defaults when the file is missing or unreadable.
+    init(fileURL: URL = UserData.defaultFileURL) {
+        self.fileURL = fileURL
+        let stored = Snapshot.load(from: fileURL) ?? .defaults
+        firstReminderDate = stored.firstReminderDate
+        secondReminderDate = stored.secondReminderDate
+        didSetup = stored.didSetup
+        sendToSnap = stored.sendToSnap
+        hasTwoReminders = stored.hasTwoReminders
+        wantsNotifications = stored.wantsNotifications
+        isTimeSensitive = stored.isTimeSensitive
     }
-    
-    // Variables
-    
-    // Misc. variables
-    
-    var timeFormatter: DateFormatter = DateFormatter()
-    let didChange = PassthroughSubject<UserData, Never>()
-    let content = UNMutableNotificationContent()
-    let center = UNUserNotificationCenter.current()
-    
-    // Notification variables
-    
-    var firstReminderContent: UNMutableNotificationContent {
-        let newContent = UNMutableNotificationContent()
-        
-        // MARK: Notification settings
-        
-        newContent.title = "Ding ding! It's streak time!"
-        newContent.body = "Send your streaks before it's too late!"
-        newContent.sound = UNNotificationSound.default
-        if #available(iOS 15.0, *) {
-            if isTimeSensitive {
-                newContent.interruptionLevel = .timeSensitive
-            }
-        }
-        
-        return newContent
+
+    /// Where the app has always kept its settings: `Documents/UserData.json`.
+    static var defaultFileURL: URL {
+        URL.documentsDirectory.appending(path: "UserData.json")
     }
-    
-    var firstReminderTrigger: UNCalendarNotificationTrigger {
-        let triggerDaily = Calendar.current.dateComponents([.hour, .minute, .second], from: firstReminderDate)
-        let newTrigger = UNCalendarNotificationTrigger(dateMatching: triggerDaily, repeats: true)
-        return newTrigger
-    }
-    
-    let firstReminderID = "First Reminder Notification"
-    
-    var firstReminderRequest: UNNotificationRequest {
-        return UNNotificationRequest(identifier: firstReminderID, content: firstReminderContent, trigger: firstReminderTrigger)
-    }
-    
-    var secondReminderContent: UNMutableNotificationContent {
-        let newContent = UNMutableNotificationContent()
-        newContent.title = "Ding ding! It's streak time!"
-        newContent.body = "Send your streaks before it's too late!"
-        newContent.sound = UNNotificationSound.default
-        if #available(iOS 15.0, *) {
-            if isTimeSensitive {
-                newContent.interruptionLevel = .timeSensitive
-            }
-        }
-        return newContent
-    }
-    
-    var secondReminderTrigger: UNCalendarNotificationTrigger {
-        let triggerDaily = Calendar.current.dateComponents([.hour, .minute, .second], from: secondReminderDate)
-        let newTrigger = UNCalendarNotificationTrigger(dateMatching: triggerDaily, repeats: true)
-        return newTrigger
-    }
-    
-    let secondReminderID = "Second Reminder Notification"
-    
-    var secondReminderRequest: UNNotificationRequest {
-        return UNNotificationRequest(identifier: secondReminderID, content: secondReminderContent, trigger: secondReminderTrigger)
-    }
-    
-    // Save data variables
-    
-    @Published var firstReminderDate: Date {
-        didSet {
-            didChange.send(self)
-            setupNotifs()
-        }
-    }
-    
-    @Published var secondReminderDate: Date {
-        didSet {
-            didChange.send(self)
-            setupNotifs()
-            
-        }
-    }
-    
-    @Published var didSetup: Bool {
-        didSet {
-            didChange.send(self)
-        }
-    }
-    
-    @Published var sendToSnap: Bool {
-        didSet {
-            didChange.send(self)
-        }
-    }
-    
-    @Published var hasTwoReminders: Bool {
-        didSet {
-            didChange.send(self)
-            setupNotifs()
-        }
-    }
-    
-    @Published var wantsNotifications: Bool {
-        didSet {
-            didChange.send(self)
-        }
-    }
-    
-    @Published var isTimeSensitive: Bool {
-        didSet {
-            didChange.send(self)
-            setupNotifs()
-        }
-    }
-    
-    // Methods
-    init() {
-        timeFormatter = DateFormatter()
-        firstReminderDate = Date(timeIntervalSinceReferenceDate: 54_000) // 10:00 AM
-        secondReminderDate = Date(timeIntervalSinceReferenceDate: 90_000) // 8:00 PM
-        didSetup = false
-        sendToSnap = true
-        hasTwoReminders = true
-        wantsNotifications = false
-        isTimeSensitive = true
-    }
-    func saveToFile() {
-        guard let directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-        let fileURL = directoryURL.appendingPathComponent("UserData.json")
-        let myEncoder = JSONEncoder()
+
+    // MARK: Notifications
+
+    /// Asks permission to show alerts and play sounds, recording the answer in ``wantsNotifications``.
+    func requestNotificationAuthorization() async {
         do {
-            let encoded = try? myEncoder.encode(self)
-            try encoded?.write(to: fileURL, options: [])
+            wantsNotifications = try await UNUserNotificationCenter.current()
+                .requestAuthorization(options: [.alert, .sound])
         } catch {
-            print("There is an error in the saveToFile() method of UserData.")
+            Self.logger.error("Notification authorization failed: \(error.localizedDescription)")
+            wantsNotifications = false
         }
     }
-    static func getFromFile() -> UserData? {
-        guard let directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
-        let fileURL = directoryURL.appendingPathComponent("UserData.json")
-        let myDecoder = JSONDecoder()
-        do {
-            let data = try Data(contentsOf: fileURL, options: [])
-            let decoded = try? myDecoder.decode(UserData.self, from: data)
-            return decoded!
-        } catch {
-            print("There is an error in the getFromFile() method of UserData.")
+
+    /// Registers (or refreshes) the repeating daily reminders so they match the current settings.
+    /// Does nothing until setup is complete.
+    func scheduleReminders() {
+        guard didSetup else { return }
+        let center = UNUserNotificationCenter.current()
+
+        var requests = [reminderRequest(identifier: Self.firstReminderIdentifier, at: firstReminderDate)]
+        if hasTwoReminders {
+            requests.append(reminderRequest(identifier: Self.secondReminderIdentifier, at: secondReminderDate))
+        } else {
+            center.removePendingNotificationRequests(withIdentifiers: [Self.secondReminderIdentifier])
         }
-        return UserData()
-    }
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(firstReminderDate, forKey: .firstReminderDate)
-        try container.encode(secondReminderDate, forKey: .secondReminderDate)
-        try container.encode(didSetup, forKey: .didSetup)
-        try container.encode(sendToSnap, forKey: .sendToSnap)
-        try container.encode(hasTwoReminders, forKey: .hasTwoReminders)
-        try container.encode(wantsNotifications, forKey: .wantsNotifications)
-        try container.encode(isTimeSensitive, forKey: .isTimeSensitive)
-    }
-    init(from decoder: Decoder) throws {
-        
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        firstReminderDate = try values.decode(Date.self, forKey: .firstReminderDate)
-        secondReminderDate = try values.decode(Date.self, forKey: .secondReminderDate)
-        didSetup = try values.decode(Bool.self, forKey: .didSetup)
-        sendToSnap = try values.decode(Bool.self, forKey: .sendToSnap)
-        hasTwoReminders = try values.decode(Bool.self, forKey: .hasTwoReminders)
-        wantsNotifications = try values.decode(Bool.self, forKey: .wantsNotifications)
-        isTimeSensitive = try values.decode(Bool.self, forKey: .isTimeSensitive)
-    }
-    func getTimeFormatter() -> DateFormatter {
-        timeFormatter.timeStyle = .short
-        return timeFormatter
-    }
-    func setupNotifs() {
-        if self.didSetup {
-            print("Setting up notifications...")
-            if self.hasTwoReminders {
-                center.add(self.secondReminderRequest, withCompletionHandler: { (error) in
-                    if error != nil {
-                        print("There is an error in the setupNotifs() method of MainScreen.swift")
-                    }
-                })
-            } else {
-                center.removeAllPendingNotificationRequests()
-            }
-            
-            center.add(self.firstReminderRequest, withCompletionHandler: { (error) in
-                if error != nil {
-                    print("There is an error in the setupNotifs() method of MainScreen.swift")
+
+        Task {
+            for request in requests {
+                do {
+                    try await center.add(request)
+                } catch {
+                    Self.logger.error("Failed to schedule \(request.identifier): \(error.localizedDescription)")
                 }
-            })
+            }
+        }
+    }
+
+    /// Builds the repeating daily notification for a reminder at the hour and minute of `date`.
+    func reminderRequest(identifier: String, at date: Date) -> UNNotificationRequest {
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Ding ding! It's streak time!")
+        content.body = String(localized: "Send your streaks before it's too late!")
+        content.sound = .default
+        content.interruptionLevel = isTimeSensitive ? .timeSensitive : .active
+
+        let time = Calendar.current.dateComponents([.hour, .minute], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: time, repeats: true)
+        return UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+    }
+
+    private static let firstReminderIdentifier = "First Reminder Notification"
+    private static let secondReminderIdentifier = "Second Reminder Notification"
+
+    // MARK: Persistence
+
+    private func settingsDidChange(affectsSchedule: Bool) {
+        save()
+        if affectsSchedule {
+            scheduleReminders()
+        }
+    }
+
+    private func save() {
+        let snapshot = Snapshot(
+            firstReminderDate: firstReminderDate,
+            secondReminderDate: secondReminderDate,
+            didSetup: didSetup,
+            sendToSnap: sendToSnap,
+            hasTwoReminders: hasTwoReminders,
+            wantsNotifications: wantsNotifications,
+            isTimeSensitive: isTimeSensitive)
+        do {
+            try JSONEncoder().encode(snapshot).write(to: fileURL, options: .atomic)
+        } catch {
+            Self.logger.error("Failed to save settings: \(error.localizedDescription)")
+        }
+    }
+
+    nonisolated private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "StreakPal", category: "UserData")
+
+    /// The on-disk representation. The keys match the original `UserData.json` exactly.
+    nonisolated private struct Snapshot: Codable {
+        var firstReminderDate: Date
+        var secondReminderDate: Date
+        var didSetup: Bool
+        var sendToSnap: Bool
+        var hasTwoReminders: Bool
+        var wantsNotifications: Bool
+        var isTimeSensitive: Bool
+
+        /// A fresh install's settings: reminders at 10:00 AM and 8:00 PM local time, both on and Time Sensitive.
+        static var defaults: Snapshot {
+            let calendar = Calendar.current
+            let now = Date.now
+            return Snapshot(
+                firstReminderDate: calendar.date(bySettingHour: 10, minute: 0, second: 0, of: now) ?? now,
+                secondReminderDate: calendar.date(bySettingHour: 20, minute: 0, second: 0, of: now) ?? now,
+                didSetup: false,
+                sendToSnap: true,
+                hasTwoReminders: true,
+                wantsNotifications: false,
+                isTimeSensitive: true)
+        }
+
+        static func load(from url: URL) -> Snapshot? {
+            guard let data = try? Data(contentsOf: url) else { return nil }
+            do {
+                return try JSONDecoder().decode(Snapshot.self, from: data)
+            } catch {
+                UserData.logger.error("Ignoring unreadable settings file: \(error.localizedDescription)")
+                return nil
+            }
         }
     }
 }
+
+#if DEBUG
+extension UserData {
+    /// A throwaway instance for previews, backed by a temporary file so real settings are never touched.
+    static func preview(didSetup: Bool = true) -> UserData {
+        let fileURL = URL.temporaryDirectory.appending(path: "StreakPalPreview-\(UUID().uuidString).json")
+        let userData = UserData(fileURL: fileURL)
+        userData.didSetup = didSetup
+        return userData
+    }
+}
+#endif

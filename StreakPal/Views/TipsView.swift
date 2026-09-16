@@ -7,75 +7,58 @@
 
 import SwiftUI
 
+/// A few tips for keeping Snapstreaks alive, presented as a sheet.
 struct TipsView: View {
-    
-    
-    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
-    var doneButton: some View {
-        Button(action: {
-            //self.isPresented.toggle()
-            self.presentationMode.wrappedValue.dismiss()
-        }) {
-                Text("Done")
-                    .fontWeight(.bold)
-        }
-    }
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
-        NavigationView {
-            
+        NavigationStack {
             ScrollView {
-                VStack(alignment: .leading) {
-                    
-                    HStack {
-                        Text("Send streaks twice a day")
-                            .foregroundColor(Color.red)
-                            .font(.system(size: 20))
-                            .fontWeight(.bold)
-                            .padding(.vertical)
-                        Spacer()
-                    }
-                    
-                    Text("Sending streaks both in the morning and in the evening ensures you always mantain your end of the streak and creates an easy routine.\n\nIf you send streaks only once per day, you'll have to send them earlier and earlier each day in order to mantain the 24-hour requirement.")
-                        .multilineTextAlignment(.leading)
-                    
-                    
-                    HStack {
-                        Text("Use a Shortcut to send faster")
-                            .foregroundColor(Color.accentColor)
-                            .font(.system(size: 20))
-                            .fontWeight(.bold)
-                            .padding(.vertical)
-                        Spacer()
-                    }
-                    
-                    Text("Snapchat's new Shortcuts feature allows you to snap multiple friends at once in only a single tap. Creating a \"streaks\" shortcut will enable you to select all the friends you have streaks with instantly instead of one by one.")
-                        .multilineTextAlignment(.leading)
-                    
-                    HStack {
-                        Text("Only Snaps count for streaks")
-                            .foregroundColor(Color.yellow)
-                            .font(.system(size: 20))
-                            .fontWeight(.bold)
-                            .padding(.vertical)
-                        Spacer()
-                    }
-                    
-                    Text("Both photo and video Snaps are valid for streaks. However, Chats and Snaps to group chats will not count - furthermore, Snaps sent with Memories content are also invalid for streaks.")
-                        .multilineTextAlignment(.leading)
-                    
-                    Spacer()
-                    
+                VStack(alignment: .leading, spacing: 28) {
+                    Tip(
+                        title: "Send streaks twice a day",
+                        color: .red,
+                        detail: "Sending streaks both in the morning and in the evening ensures you always maintain your end of the streak and creates an easy routine.\n\nIf you send streaks only once per day, you'll have to send them earlier and earlier each day in order to maintain the 24-hour requirement.")
+                    Tip(
+                        title: "Use a Shortcut to send faster",
+                        color: .accentColor,
+                        detail: "Snapchat's Shortcuts feature allows you to snap multiple friends at once in only a single tap. Creating a \"streaks\" shortcut will enable you to select all the friends you have streaks with instantly instead of one by one.")
+                    Tip(
+                        title: "Only Snaps count for streaks",
+                        color: .yellow,
+                        detail: "Both photo and video Snaps are valid for streaks. However, Chats and Snaps to group chats will not count. Furthermore, Snaps sent with Memories content are also invalid for streaks.")
                 }
-                .padding(.horizontal)
+                .padding()
             }
-                .navigationBarTitle(Text("Streak Tips"))
-        .navigationBarItems(trailing: doneButton)
+            .navigationTitle("Streak Tips")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }
 
-struct TipsView_Previews: PreviewProvider {
-    static var previews: some View {
-        TipsView()
+/// One tip: a colored headline followed by its explanation.
+private struct Tip: View {
+    let title: LocalizedStringKey
+    let color: Color
+    let detail: LocalizedStringKey
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.title3.bold())
+                .foregroundStyle(color)
+            Text(detail)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
+
+#Preview {
+    TipsView()
 }

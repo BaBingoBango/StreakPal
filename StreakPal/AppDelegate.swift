@@ -6,89 +6,43 @@
 //
 
 import UIKit
+import UserNotifications
 
-@UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+/// Handles the one job the SwiftUI app lifecycle can't cover on its own: reacting to reminder taps,
+/// which requires a `UNUserNotificationCenter` delegate to be in place before the app finishes launching.
+final class AppDelegate: NSObject, UIApplicationDelegate {
 
-    var userData: UserData = UserData()
-    
-    static func shared() -> AppDelegate {
-        return UIApplication.shared.delegate as! AppDelegate
-    }
+    /// The app's settings, owned here so notification handling and the SwiftUI scene share one instance.
+    let userData = UserData()
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
-        
-        // MARK: App Launch Code
-        
-        // Read save data
-        if let dataFromFile = UserData.getFromFile() {
-            print("Reading data...")
-            userData = dataFromFile
-        } else {
-            userData = UserData()
-        }
-        
-        UNUserNotificationCenter.current().delegate = self
-        
-        return true
-    }
-    
-    func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
         return true
-        
     }
-
-    // MARK: UISceneSession Lifecycle
-
-    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        // Called when a new scene session is being created.
-        // Use this method to select a configuration to create the new scene with.
-        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
-    }
-    
-    func applicationWillTerminate(_ application: UIApplication) {
-        
-        // MARK: App Termination Code
-        
-        // Save the data
-        print("Saving data...")
-        AppDelegate.shared().userData.saveToFile()
-        
-    }
-
-    func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
-        // Called when the user discards a scene session.
-        // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
-        // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
-    }
-
-
 }
+
 extension AppDelegate: UNUserNotificationCenterDelegate {
-// This function will be called right after user taps on the notification
-    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        
-        // MARK: Notification handler
-        
-        print("Handling notification...")
-        
-        if userData.sendToSnap {
-            let snapchatHooks = "snapchat://"
-            let snapchatURL = NSURL(string: snapchatHooks)
-            if UIApplication.shared.canOpenURL(snapchatURL! as URL) {
-                print("Opening snap...")
-                UIApplication.shared.open(snapchatURL! as URL)
-            } else {
-                print("Opening snapchat.com...")
-                UIApplication.shared.open(NSURL(string: "http://snapchat.com/")! as URL)
-            }
-        }
-        
-      completionHandler()
-    }
-    
-}
 
+    /// Called when the user taps a reminder. Opens Snapchat, or its website when the app isn't installed,
+    /// if the "Open Snapchat on Tap" setting is on.
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        await openSnapchatIfEnabled()
+    }
+
+    private func openSnapchatIfEnabled() async {
+        guard userData.sendToSnap else { return }
+        let application = UIApplication.shared
+        if await application.open(Self.snapchatAppURL) == false {
+            _ = await application.open(Self.snapchatWebsiteURL)
+        }
+    }
+
+    private static let snapchatAppURL = URL(string: "snapchat://")!
+    private static let snapchatWebsiteURL = URL(string: "https://www.snapchat.com/")!
+}
