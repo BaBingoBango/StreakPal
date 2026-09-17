@@ -15,8 +15,10 @@ struct FeatureCard: View {
 
     var body: some View {
         HStack(spacing: 16) {
+            // Decorative: scales with Dynamic Type but is never clipped, and is hidden from VoiceOver.
             Text(emoji)
                 .font(.largeTitle)
+                .fixedSize()
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
