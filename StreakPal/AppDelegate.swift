@@ -20,11 +20,23 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        // Keep the pending reminders in sync with the saved settings, so an app update or reinstall
+        // can never leave the schedule stale or unregistered.
+        userData.scheduleReminders()
         return true
     }
 }
 
 extension AppDelegate: UNUserNotificationCenterDelegate {
+
+    /// Shows a reminder even while StreakPal is in the foreground. Without this, the system drops
+    /// notifications that arrive while the app is on screen.
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .list, .sound]
+    }
 
     /// Called when the user taps a reminder. Opens Snapchat, or its website when the app isn't installed,
     /// if the "Open Snapchat on Tap" setting is on.

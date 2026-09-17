@@ -45,6 +45,8 @@ struct MainScreen: View {
                     .buttonStyle(.plain)
                 }
                 .padding()
+                .frame(maxWidth: 640)
+                .frame(maxWidth: .infinity)
             }
             .navigationTitle("StreakPal")
             .toolbar {

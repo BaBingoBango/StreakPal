@@ -90,11 +90,18 @@ final class UserData {
         }
 
         Task {
+            // Re-asserting authorization never prompts again once the user has answered, and it stops
+            // scheduling from failing silently when permission was never granted.
+            guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true else {
+                Self.logger.error("Reminders not scheduled: notifications are not authorized.")
+                return
+            }
             for request in requests {
                 do {
                     try await center.add(request)
+                    Self.logger.info("Scheduled \(request.identifier, privacy: .public).")
                 } catch {
-                    Self.logger.error("Failed to schedule \(request.identifier): \(error.localizedDescription)")
+                    Self.logger.error("Failed to schedule \(request.identifier, privacy: .public): \(error.localizedDescription, privacy: .public)")
                 }
             }
         }
@@ -180,9 +187,9 @@ final class UserData {
     }
 }
 
-#if DEBUG
 extension UserData {
-    /// A throwaway instance for previews, backed by a temporary file so real settings are never touched.
+    /// A throwaway instance for Xcode previews, backed by a temporary file so real settings are never touched.
+    /// Not guarded by `#if DEBUG` because `#Preview` bodies are compiled in Release builds too.
     static func preview(didSetup: Bool = true) -> UserData {
         let fileURL = URL.temporaryDirectory.appending(path: "StreakPalPreview-\(UUID().uuidString).json")
         let userData = UserData(fileURL: fileURL)
@@ -190,4 +197,3 @@ extension UserData {
         return userData
     }
 }
-#endif
