@@ -11,8 +11,9 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(UserData.self) private var userData
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var isShowingSetup = false
-    @State private var isShowingMailComposer = false
+    @State private var isShowingFeedbackFallback = false
 
     private static let privacyPolicyURL = URL(string: "https://drive.google.com/open?id=1_pU_grtl1SHhvknDzSl6C3Aizm5LPkd4")!
 
@@ -43,26 +44,28 @@ struct SettingsView: View {
                     }
                 }
 
-                Section {
+                Section("Information") {
                     LabeledContent("Version", value: Bundle.main.versionDescription)
                     Link(destination: Self.privacyPolicyURL) {
                         Label("View Privacy Policy", systemImage: "hand.raised.fill")
                     }
                     Button {
-                        isShowingMailComposer = true
+                        // Opens the user's default mail app; falls back to an alert if none can handle mailto.
+                        openURL(FeedbackEmail.url) { accepted in
+                            isShowingFeedbackFallback = !accepted
+                        }
                     } label: {
                         Label("Send Feedback", systemImage: "envelope.fill")
                     }
-                    .disabled(!MailComposeView.canSendMail)
-                    // iOS 26 draws a disabled Form button in the primary label color, so dim it explicitly.
-                    .foregroundStyle(MailComposeView.canSendMail ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
-                } header: {
-                    Text("Information")
-                } footer: {
-                    if !MailComposeView.canSendMail {
-                        Text("To send feedback without a mail account registered to your device, visit the support link located on StreakPal's App Store page.")
-                    }
                 }
+            }
+            .alert("No Mail App Found", isPresented: $isShowingFeedbackFallback) {
+                Button("Copy Email Address") {
+                    UIPasteboard.general.string = FeedbackEmail.address
+                }
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("You can send feedback to \(FeedbackEmail.address).")
             }
             .animation(.default, value: userData.hasTwoReminders)
             .navigationTitle("Settings")
@@ -75,9 +78,6 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $isShowingSetup) {
                 ReminderSetupFlow()
-            }
-            .sheet(isPresented: $isShowingMailComposer) {
-                MailComposeView()
             }
         }
     }

@@ -22,6 +22,9 @@
     "Continue" : {
 
     },
+    "Copy Email Address" : {
+
+    },
     "Ding ding! It's streak time!" : {
 
     },
@@ -52,6 +55,9 @@
     "Never fear! Tap here to send your friends a strongly worded message encouraging them to snap you back!" : {
 
     },
+    "No Mail App Found" : {
+
+    },
     "No Streak Reminders" : {
 
     },
@@ -59,6 +65,9 @@
 
     },
     "Oh. My. God. Ohmygod. Ohhhhhhhhhmmmmmyyyyyyygoddddddddd. SEND YOUR STREAKS!!!" : {
+
+    },
+    "OK" : {
 
     },
     "Only Snaps count for streaks" : {
@@ -121,9 +130,6 @@
     "This is an urgent message. If you do not send your streaks right away, there will be dire consequences for the entire world. This message will self-destruct in five seconds." : {
 
     },
-    "To send feedback without a mail account registered to your device, visit the support link located on StreakPal's App Store page." : {
-
-    },
     "Two Reminders Per Day" : {
 
     },
@@ -146,6 +152,9 @@
 
     },
     "With notifications off, you will not receive any reminders from StreakPal. You can always head to Settings to re-enable notifications." : {
+
+    },
+    "You can send feedback to %@." : {
 
     },
     "You must send your streaks. You simply must. There is no other option." : {
