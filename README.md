@@ -19,7 +19,7 @@ StreakPal is a small, fully native SwiftUI app kept current with Apple's latest 
 - **SwiftUI app lifecycle** with `NavigationStack`, `ShareLink`, and toolbar-driven navigation
 - **Observation** (`@Observable`) for the settings model, persisted as JSON in a format that stays compatible with every previous release
 - **Swift 6 language mode** with strict concurrency and main-actor default isolation
-- **Liquid Glass** controls from the iOS 26 SDK
+- **Liquid Glass** controls from the iOS 26 SDK and a layered app icon built with Icon Composer
 - **Local notifications** through UserNotifications, including the Time Sensitive interruption level
 - **String Catalog** localization, a **privacy manifest**, and a generated Info.plist
 - **Swift Testing** unit tests for the settings model, plus XCTest UI tests
